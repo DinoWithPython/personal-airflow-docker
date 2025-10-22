@@ -37,7 +37,9 @@ docker-compose up --build
 docker-compose up
 ```
 <b>airflow-webserver:</b> Веб-интерфейс Airflow (http://localhost:8080).
+
 <b>airflow-scheduler:</b> Планировщик задач.
+
 <b>postgres:</b> База данных PostgreSQL.
 3. Дождитесь инициализации.
 
