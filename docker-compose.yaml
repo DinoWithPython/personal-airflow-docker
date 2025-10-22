@@ -1,0 +1,64 @@
+version: '3'
+services:
+  # Контейнер с вебсервером airflow
+  airflow-webserver:
+    container_name: airflow
+    build: .
+    ports:
+      - "8080:8080" # Веб-порт Airflow
+    environment:
+      # Указываем тип исполнителя. В данном случае для локального использования.
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      # Подключение в базе данных постгреса
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+    # Подключаем необходимые для работы и отладки локальные папки.
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+    # Зависимость запуска "от".
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # Выполнение команд в консоли. Для начала ждем инициализации постгреса, примерно 10 секунд.
+    # Потом инициализируем базу данных аирфлоу. Создаем пользователя и запускаем веб-сервер.
+    command: >
+      bash -c "
+      sleep 10 &&
+      airflow db init &&
+      airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com &&
+      exec airflow webserver"
+
+  # Контейнер планироващика запускаем отдельно.
+  airflow-scheduler:
+    container_name: airflow-scheduler
+    build: .
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: airflow scheduler
+
+  # Контейнер с БД.
+  postgres:
+    container_name: postgres
+    image: postgres:13
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    # Проверяем, что база данных доступна
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow", "-d", "airflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
