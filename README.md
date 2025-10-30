@@ -26,10 +26,13 @@ cd personal-airflow-docker
 ```
 2. Запустите контейнеры:
 ```
-# Для первого запуска со сбором образов
-docker-compose up --build
-# Далее можно опустить атрибут --build, если не менялись зависимости или конфигурации
+docker-compose up -d  # в этом случае контейнеры запустятся в фоновом режиме, логи не видны в терминале
+или
+
 docker-compose up
+
+# Следующая команда нужна После изменений в Dockerfile или requirements.txt
+docker-compose up --build
 ```
 <b>airflow-webserver:</b> Веб-интерфейс Airflow (http://localhost:8080).<br>
 <b>airflow-scheduler:</b> Планировщик задач.<br>
@@ -57,6 +60,8 @@ ____
 ├── docker-compose.yml        # Основной файл конфигурации
 ├── Dockerfile                # Кастомный образ Airflow (если нужна модификация)
 ├── requirements.txt          # Дополнительные зависимости Python
+├── logs                      # Папка, в которой будут записываться логи airflow
+├── plugins                   # Папка для плагинов, если нужно
 └── dags/                     # Примеры DAG'ов для тестирования
     └── example_dag.py
 ```
